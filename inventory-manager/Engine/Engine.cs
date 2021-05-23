@@ -15,7 +15,7 @@ namespace Engine
 
         void MoveLeft();
 
-        void MoveRigth();
+        void MoveRight();
     }
 
     public interface IRotatable
@@ -84,10 +84,14 @@ namespace Engine
 
         public void MoveDown()
         {
-            this.Position = new Vector2(
-                this.Position.X,
-                Math.Max(this.Position.Y + this.Height + 1, this.ReferenceGrid.Height)
-            );
+            var newY = this.Position.Y + 1;
+            if (newY < this.ReferenceGrid.Height)
+            {
+                this.Position = new Vector2(
+                    this.Position.X,
+                    Math.Min(newY, this.ReferenceGrid.Height)
+                );
+            }
         }
 
         public void MoveLeft()
@@ -98,19 +102,23 @@ namespace Engine
             );
         }
 
-        public void MoveRigth()
+        public void MoveRight()
         {
-            this.Position = new Vector2(
-                Math.Max(this.Position.X + this.Width + 1, this.ReferenceGrid.Width),
-                this.Position.Y
-            );
+            var newX = this.Position.X + 1;
+            if (newX < this.ReferenceGrid.Width)
+            {
+                this.Position = new Vector2(
+                Math.Min(this.Position.X + 1, this.ReferenceGrid.Width),
+                    this.Position.Y
+                );
+            }
         }
 
         public void MoveUp()
         {
             this.Position = new Vector2(
                 this.Position.X,
-                Math.Min(this.Position.Y - 1, 0)
+                Math.Max(this.Position.Y - 1, 0)
             );
         }
     }
@@ -146,10 +154,11 @@ namespace Engine
 
         bool hasTexture = false;
 
-        public Pointer(int drawingWidth, int drawingHeight, Texture2D texture2D)
+        public Pointer(Texture2D texture2D, IGrid referenceGrid)
         {
             this.Width = 1;
             this.Height = 1;
+            this.ReferenceGrid = referenceGrid;
 
             if (this.Texture2D == null)
             {
@@ -192,7 +201,7 @@ namespace Engine
         }
     }
 
-    public class Inventory : IMovable, IGrid, IDrawable
+    public class Inventory : IMovable, IRotatable, IGrid, IDrawable
     {
         private Pointer _pointer;
 
@@ -214,14 +223,22 @@ namespace Engine
 
         public Vector2 Position { get; protected set; }
 
-        public List<IGridItem> Items;
+        public List<Item> Items;
 
         private int _gridCellSizeWidth;
         private int _gridCellSizeHeight;
 
-        private IGridItem _selectedItem;
+        private Item _selectedItem;
 
         private bool hasTexture = false;
+
+        public bool HasSelection
+        {
+            get
+            {
+                return this._selectedItem != null;
+            }
+        }
 
         public Inventory(
             Vector2 position,
@@ -236,9 +253,9 @@ namespace Engine
             this.DrawingHeight = drawingHeight;
             this._gridCellSizeWidth = this.DrawingWidth / width;
             this._gridCellSizeHeight = this.DrawingHeight / height;
-            this._pointer = new Pointer(this._gridCellSizeWidth,this._gridCellSizeHeight,pointerTexture2D);
+            this._pointer = new Pointer(pointerTexture2D, this);
 
-            this.Items = new List<IGridItem>();
+            this.Items = new List<Item>();
             this.Position = position;
             this.Width = width;
             this.Height = height;
@@ -254,7 +271,7 @@ namespace Engine
 
         public void MoveDown()
         {
-            if(this._selectedItem != null)
+            if(this._selectedItem == null)
             {
                 this._pointer.MoveDown();
             }
@@ -262,25 +279,41 @@ namespace Engine
 
         public void MoveLeft()
         {
-            if (this._selectedItem != null)
+            if (this._selectedItem == null)
             {
                 this._pointer.MoveLeft();
             }
         }
 
-        public void MoveRigth()
+        public void MoveRight()
         {
-            if (this._selectedItem != null)
+            if (this._selectedItem == null)
             {
-                this._pointer.MoveRigth();
+                this._pointer.MoveRight();
             }
         }
 
         public void MoveUp()
         {
-            if (this._selectedItem != null)
+            if (this._selectedItem == null)
             {
                 this._pointer.MoveUp();
+            }
+        }
+
+        public void RotateClockwise()
+        {
+            if (this._selectedItem != null)
+            {
+                this._selectedItem.RotateAntiClockwise();
+            }
+        }
+
+        public void RotateAntiClockwise()
+        {
+            if (this._selectedItem != null)
+            {
+                this._selectedItem.RotateClockwise();
             }
         }
 

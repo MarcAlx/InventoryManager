@@ -6,13 +6,30 @@ using Engine;
 
 namespace InventoryManager
 {
+
     public class GameWindow : Game
     {
+        private enum ActionEnum {
+            NEUTRAL,
+            LEFT,
+            RIGHT,
+            UP,
+            DOWN,
+            SELECT,
+            ROTATE_LEFT,
+            ROTATE_RIGHT,
+            UNSELECT,
+            CANCEL
+        }
+
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
         private SpriteFont _defaultFont;
 
         private Inventory _engine;
+
+        private ActionEnum _currentAction = ActionEnum.NEUTRAL;
+        private Timer _pollActionTimer;
 
         public GameWindow()
         {
@@ -29,6 +46,42 @@ namespace InventoryManager
 
             this._engine = new Inventory(new Vector2(0,0),10,5, GraphicsDevice.Viewport.Bounds.Width, GraphicsDevice.Viewport.Bounds.Height, null, null);
 
+            this._pollActionTimer = new Timer(() =>
+            {
+                switch (this._currentAction)
+                {
+                    case ActionEnum.CANCEL:
+                        this._engine.CancelSelect();
+                        break;
+                    case ActionEnum.UP:
+                        this._engine.MoveUp();
+                        break;
+                    case ActionEnum.DOWN:
+                        this._engine.MoveDown();
+                        break;
+                    case ActionEnum.LEFT:
+                        this._engine.MoveLeft();
+                        break;
+                    case ActionEnum.RIGHT:
+                        this._engine.MoveRight();
+                        break;
+                    case ActionEnum.SELECT:
+                        this._engine.TrySelect();
+                        break;
+                    case ActionEnum.ROTATE_LEFT:
+                        this._engine.RotateAntiClockwise();
+                        break;
+                    case ActionEnum.ROTATE_RIGHT:
+                        this._engine.RotateClockwise();
+                        break;
+                    case ActionEnum.NEUTRAL:
+                    default:
+                        break;
+                }
+            }, Config.POLL_KEYBOARD_INTERVAL, true);
+
+            this._pollActionTimer.Start();
+
             base.Initialize();
         }
 
@@ -40,8 +93,56 @@ namespace InventoryManager
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            //poll keyboard
+            KeyboardState keyBoardState = Keyboard.GetState();
+
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyBoardState.IsKeyDown(Keys.Escape))
                 Exit();
+
+            if (keyBoardState.IsKeyDown(Keys.Left)){
+                this._currentAction = ActionEnum.LEFT;
+            }
+            else if (keyBoardState.IsKeyDown(Keys.Right))
+            {
+                this._currentAction = ActionEnum.RIGHT;
+            }
+            else if (keyBoardState.IsKeyDown(Keys.Up))
+            {
+                this._currentAction = ActionEnum.UP;
+            }
+            else if (keyBoardState.IsKeyDown(Keys.Down))
+            {
+                this._currentAction = ActionEnum.DOWN;
+            }
+            else if (keyBoardState.IsKeyDown(Keys.L))
+            {
+                this._currentAction = ActionEnum.ROTATE_LEFT;
+            }
+            else if (keyBoardState.IsKeyDown(Keys.R))
+            {
+                this._currentAction = ActionEnum.ROTATE_RIGHT;
+            }
+            else if (keyBoardState.IsKeyDown(Keys.Enter))
+            {
+                if (this._engine.HasSelection)
+                {
+                    this._currentAction = ActionEnum.UNSELECT;
+                }
+                else
+                {
+                    this._currentAction = ActionEnum.SELECT;
+                }
+            }
+            else if (keyBoardState.IsKeyDown(Keys.Space))
+            {
+                this._currentAction = ActionEnum.CANCEL;
+            }
+            else
+            {
+                this._currentAction = ActionEnum.NEUTRAL;
+            }
+
+            this._pollActionTimer.Update(gameTime.ElapsedGameTime);
 
             this._engine.Update(this.GraphicsDevice, GraphicsDevice.Viewport.Bounds.Width, GraphicsDevice.Viewport.Bounds.Height);
 

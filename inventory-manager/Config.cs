@@ -17,5 +17,10 @@ namespace InventoryManager
         /// FPS cap
         /// </summary>
         public static readonly int FPS_CAP = 60;
+
+        /// <summary>
+        /// Keyboard is polled every
+        /// </summary>
+        public static readonly TimeSpan POLL_KEYBOARD_INTERVAL = TimeSpan.FromMilliseconds(50); 
     }
 }
