@@ -67,6 +67,8 @@ namespace InventoryManager
             this._engine.StoreItem(new Herb(new Vector2(1,1)));
             this._engine.StoreItem(new Box(new Vector2(4, 3)));
             this._engine.StoreItem(new Egg(new Vector2(5, 0)));
+            this._engine.StoreItem(new Egg(new Vector2(20, 0)));
+            this._engine.StoreItem(new Herb(new Vector2(1, 1)));
 
             this._pollActionTimer = new Timer(() =>
             {

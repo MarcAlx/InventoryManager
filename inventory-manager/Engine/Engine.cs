@@ -232,8 +232,8 @@ namespace Engine
 
         public void Move(Vector2 to)
         {
-            if(to.X > 0 && to.X < this.ReferenceGrid.Width
-            && to.Y > 0 && to.Y< this.ReferenceGrid.Height)
+            if(to.X >= 0 && to.X < this.ReferenceGrid.Width
+            && to.Y >= 0 && to.Y< this.ReferenceGrid.Height)
             {
                 this.Position = to;
             }
@@ -490,6 +490,23 @@ namespace Engine
             }
         }
 
+        /// <summary>
+        /// Return item at pos in grid if no item null
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        public Item ItemAt(Vector2 pos)
+        {
+            foreach (var item in this.StoredItems)
+            {
+                if (item.Bounds.Intersects(new Rectangle(Convert.ToInt32(pos.X),Convert.ToInt32(pos.Y),1,1)))
+                {
+                    return item;
+                }
+            }
+            return null;
+        }
+
         public void CancelSelect()
         {
             if (this.HasSelection)
@@ -515,10 +532,58 @@ namespace Engine
             }
         }
 
-        public void StoreItem(Item item)
+        /// <summary>
+        /// Store an item in enventory, rearrange if it intersects another item
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="rearrange"></param>
+        /// <returns>True if added, false if no place found</returns>
+        public bool StoreItem(Item item, bool rearrange = true)
         {
             item.ReferenceGrid = this;
-            this.StoredItems.Add(item);
+
+            bool findNewPlace = !(new Rectangle(0, 0, this.Width, this.Height)).Contains(item.Bounds);
+
+            if (!findNewPlace)
+            {
+                foreach (var tmp in this.StoredItems)
+                {
+                    if (tmp.Bounds.Intersects(item.Bounds))
+                    {
+                        //do nothing
+                        if (!rearrange)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            findNewPlace = true;
+                        }
+                    }
+                }
+            }
+
+            if (findNewPlace)
+            {
+                for(var i = 0; i < this.Width; i++)
+                {
+                    for (var j = 0; j < this.Height; j++)
+                    {
+                        var p = new Vector2(i, j);
+                        if (this.ItemAt(p) == null) {
+                            item.Move(p);
+                            this.StoredItems.Add(item);
+                            return true;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                this.StoredItems.Add(item);
+                return true;
+            }
+            return false;
         }
 
         public void Update(GraphicsDevice device, int drawingWidth, int drawingHeight)
