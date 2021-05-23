@@ -48,6 +48,11 @@ namespace Engine
         float RotationAngle { get; }
 
         /// <summary>
+        /// True if rotated
+        /// </summary>
+        bool IsRotated { get; }
+
+        /// <summary>
         /// Rotate
         /// </summary>
         void Rotate();
@@ -258,6 +263,14 @@ namespace Engine
 
         public abstract Vector2 GetRotationOrigin(int cellSize);
 
+        public bool IsRotated
+        {
+            get
+            {
+                return this.RotationAngle != 0;
+            }
+        }
+
         public MovableRotatableGridItem(Vector2 initialPosition) : base(initialPosition)
         {
         }
@@ -268,7 +281,7 @@ namespace Engine
             this.Width = this.Height;
             this.Height = w;
 
-            if (this.RotationAngle == 0)
+            if (!this.IsRotated)
             {
                 this.RotationAngle -= Convert.ToSingle(Toolkit.ConvertToRadians(90));
             }
@@ -389,7 +402,7 @@ namespace Engine
 
         public override Vector2 GetRotationOrigin(int cellSize)
         {
-            if(this.RotationAngle == 0)
+            if(!this.IsRotated)
             {
                 return new Vector2();
             }
@@ -429,6 +442,8 @@ namespace Engine
 
         public Vector2 Position { get; protected set; }
 
+        public bool IsRotated { get; protected set; } = false;
+
         /// <summary>
         /// Items stored in inventory
         /// </summary>
@@ -440,6 +455,8 @@ namespace Engine
         public Item SelectedItem { get; private set; }
 
         private bool hasTexture = false;
+
+        private bool _initialRotated;
 
         public bool HasSelection
         {
@@ -510,6 +527,7 @@ namespace Engine
                     if (item.Bounds.Intersects(this._pointer.Bounds))
                     {
                         this.SelectedItem = item;
+                        this._initialRotated = this.SelectedItem.IsRotated;
                         break;
                     }
                 }
@@ -563,6 +581,10 @@ namespace Engine
             if (this.HasSelection)
             {
                 this.SelectedItem.Move(this._pointer.Position);
+                if (this._initialRotated!=this.SelectedItem.IsRotated)
+                {
+                    this.SelectedItem.Rotate();
+                }
                 this.SelectedItem = null;
             }
         }
@@ -678,8 +700,8 @@ namespace Engine
                 batch.Draw(
                 item.Texture2D,
                 new Rectangle(
-                    item.RotationAngle == 0 ? x : x + Convert.ToInt32(this._gridCellSizeWidth / 2),
-                    item.RotationAngle == 0 ? y : y + Convert.ToInt32(this._gridCellSizeWidth / 2),
+                    !item.IsRotated ? x : x + Convert.ToInt32(this._gridCellSizeWidth / 2),
+                    !item.IsRotated ? y : y + Convert.ToInt32(this._gridCellSizeWidth / 2),
                     item.DrawingWidth,
                     item.DrawingHeight
                 ),
