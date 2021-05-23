@@ -35,8 +35,7 @@ namespace InventoryManager
             UP,
             DOWN,
             SELECT,
-            ROTATE_LEFT,
-            ROTATE_RIGHT,
+            ROTATE,
             UNSELECT,
             CANCEL
         }
@@ -95,11 +94,8 @@ namespace InventoryManager
                     case ActionEnum.UNSELECT:
                         this._engine.UnSelect();
                         break;
-                    case ActionEnum.ROTATE_LEFT:
-                        this._engine.RotateAntiClockwise();
-                        break;
-                    case ActionEnum.ROTATE_RIGHT:
-                        this._engine.RotateClockwise();
+                    case ActionEnum.ROTATE:
+                        this._engine.Rotate();
                         break;
                     case ActionEnum.NEUTRAL:
                     default:
@@ -141,13 +137,9 @@ namespace InventoryManager
             {
                 this._currentAction = ActionEnum.DOWN;
             }
-            else if (keyBoardState.IsKeyDown(Keys.L))
-            {
-                this._currentAction = ActionEnum.ROTATE_LEFT;
-            }
             else if (keyBoardState.IsKeyDown(Keys.R))
             {
-                this._currentAction = ActionEnum.ROTATE_RIGHT;
+                this._currentAction = ActionEnum.ROTATE;
             }
             else if (keyBoardState.IsKeyDown(Keys.Enter))
             {

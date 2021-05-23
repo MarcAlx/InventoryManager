@@ -48,14 +48,16 @@ namespace Engine
         float RotationAngle { get; }
 
         /// <summary>
-        /// Rotate clockwise
+        /// Rotate
         /// </summary>
-        void RotateClockwise();
+        void Rotate();
 
         /// <summary>
-        /// Rotate anti clockwise
+        /// Return rotation origin, according to cell size
         /// </summary>
-        void RotateAntiClockwise();
+        /// <param name="cellSize"></param>
+        /// <returns></returns>
+        Vector2 GetRotationOrigin(int cellSize);
     }
 
     /// <summary>
@@ -133,6 +135,13 @@ namespace Engine
         /// <param name="drawingWidth"></param>
         /// <param name="drawingHeight"></param>
         void Update(GraphicsDevice device, int drawingWidth, int drawingHeight);
+
+        /// <summary>
+        /// Update drawing according to a cell size
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="cellSize"></param>
+        void Update(GraphicsDevice device, int cellSize);
     }
 
     /// <summary>
@@ -247,24 +256,26 @@ namespace Engine
     {
         public float RotationAngle { get; private set; } = 0;
 
+        public abstract Vector2 GetRotationOrigin(int cellSize);
+
         public MovableRotatableGridItem(Vector2 initialPosition) : base(initialPosition)
         {
         }
 
-        public void RotateAntiClockwise()
+        public void Rotate()
         {
             var w = this.Width;
             this.Width = this.Height;
             this.Height = w;
-            this.RotationAngle -= Convert.ToSingle(Toolkit.ConvertToRadians(90));
-        }
 
-        public void RotateClockwise()
-        {
-            var w = this.Width;
-            this.Width = this.Height;
-            this.Height = w;
-            this.RotationAngle += Convert.ToSingle(Toolkit.ConvertToRadians(90));
+            if (this.RotationAngle == 0)
+            {
+                this.RotationAngle -= Convert.ToSingle(Toolkit.ConvertToRadians(90));
+            }
+            else
+            {
+                this.RotationAngle = 0;
+            }
         }
     }
 
@@ -307,6 +318,11 @@ namespace Engine
                 this.Texture2D.SetData(Enumerable.Range(0, drawingWidth * drawingHeight).Select(i => Color.White).ToArray());
             }
         }
+
+        public void Update(GraphicsDevice device, int cellSize)
+        {
+            this.Update(device, cellSize, cellSize);
+        }
     }
 
     /// <summary>
@@ -320,10 +336,15 @@ namespace Engine
 
         public int DrawingHeight { get; protected set; }
 
+        private int _initWidth;
+        private int _initHeight;
+
         public Item(Vector2 initialPosition,int width, int height, Texture2D texture2D) : base(initialPosition)
         {
             this.Width = width;
             this.Height = height;
+            this._initWidth = width;
+            this._initHeight = height;
             if (this.Texture2D == null)
             {
                 hasTexture = false;
@@ -346,11 +367,36 @@ namespace Engine
 
         public void Update(GraphicsDevice device, int drawingWidth, int drawingHeight)
         {
+            this.DrawingWidth = drawingWidth;
+            this.DrawingHeight = drawingHeight;
             if (!hasTexture)
             {
                 this.Texture2D = new Texture2D(device, drawingWidth, drawingHeight, false, SurfaceFormat.Color);
                 this.Texture2D.SetData(Enumerable.Range(0, drawingWidth * drawingHeight).Select(i => Color.LightGreen).ToArray());
             }
+        }
+
+        public void Update(GraphicsDevice device, int cellSize)
+        {
+            this.DrawingWidth = cellSize*this._initWidth;
+            this.DrawingHeight = cellSize*this._initHeight;
+            if (!hasTexture)
+            {
+                this.Texture2D = new Texture2D(device, this.DrawingWidth, this.DrawingHeight, false, SurfaceFormat.Color);
+                this.Texture2D.SetData(Enumerable.Range(0, this.DrawingWidth * this.DrawingHeight).Select(i => Color.LightGreen).ToArray());
+            }
+        }
+
+        public override Vector2 GetRotationOrigin(int cellSize)
+        {
+            if(this.RotationAngle == 0)
+            {
+                return new Vector2();
+            }
+            else
+            {
+                return new Vector2(cellSize/2.0f,cellSize/2.0f);
+            } 
         }
     }
 
@@ -474,6 +520,11 @@ namespace Engine
         {
             if (this.HasSelection)
             {
+                if(!(new Rectangle(0, 0, this.Width, this.Height)).Contains(this.SelectedItem.Bounds))
+                {
+                    return;
+                }
+
                 foreach (var item in this.StoredItems)
                 {
                     //an item intersects pointer
@@ -516,20 +567,17 @@ namespace Engine
             }
         }
 
-        public void RotateClockwise()
+        public void Rotate()
         {
             if (this.SelectedItem != null)
             {
-                this.SelectedItem.RotateAntiClockwise();
+                this.SelectedItem.Rotate();
             }
         }
 
-        public void RotateAntiClockwise()
+        public Vector2 GetRotationOrigin(int cellSize)
         {
-            if (this.SelectedItem != null)
-            {
-                this.SelectedItem.RotateClockwise();
-            }
+            return new Vector2();
         }
 
         /// <summary>
@@ -591,22 +639,28 @@ namespace Engine
             this.DrawingWidth = drawingWidth;
             this.DrawingHeight = drawingHeight;
             this._gridCellSizeWidth = this.DrawingWidth / this.Width;
-            this._gridCellSizeHeight = this.DrawingHeight / this.Height;
+            this._gridCellSizeHeight = this._gridCellSizeWidth;
+
+            var effectiveHeight = (this._gridCellSizeWidth * this.Height);
 
             if (!this.hasTexture)
             {
-                this.Texture2D = new Texture2D(device, drawingWidth, drawingHeight, false, SurfaceFormat.Color);
-                this.Texture2D.SetData(Enumerable.Range(0, drawingWidth * drawingHeight).Select(i => Color.LightCoral).ToArray());
+                this.Texture2D = new Texture2D(device, drawingWidth, effectiveHeight, false, SurfaceFormat.Color);
+                this.Texture2D.SetData(Enumerable.Range(0, drawingWidth * effectiveHeight).Select(i => Color.LightCoral).ToArray());
             }
 
             //update items
             foreach (var item in this.StoredItems)
             {
-                item.Update(device, item.Width * this._gridCellSizeWidth, item.Height * this._gridCellSizeHeight);
+                item.Update(device, this._gridCellSizeWidth);
             }
 
             //update pointer
             this._pointer.Update(device, this._pointer.Width * this._gridCellSizeWidth, this._pointer.Height * this._gridCellSizeHeight);
+        }
+
+        public void Update(GraphicsDevice device, int cellSize)
+        {
         }
 
         public void Draw(Vector2 position, SpriteBatch batch)
@@ -614,15 +668,27 @@ namespace Engine
             //draw inventory
             batch.Draw(this.Texture2D, position, Color.White);
 
+            
             //draw items
-            foreach(var item in this.StoredItems)
+            foreach (var item in this.StoredItems)
             {
+                var x = Convert.ToInt32(item.Position.X) * this._gridCellSizeWidth;
+                var y = Convert.ToInt32(item.Position.Y) * this._gridCellSizeWidth;
+
                 batch.Draw(
                 item.Texture2D,
-                new Vector2(
-                    item.Position.X * this._gridCellSizeWidth,
-                    item.Position.Y * this._gridCellSizeHeight),
-                Color.White);
+                new Rectangle(
+                    item.RotationAngle == 0 ? x : x + Convert.ToInt32(this._gridCellSizeWidth / 2),
+                    item.RotationAngle == 0 ? y : y + Convert.ToInt32(this._gridCellSizeWidth / 2),
+                    item.DrawingWidth,
+                    item.DrawingHeight
+                ),
+                null,
+                Color.White,
+                item.RotationAngle,
+                item.GetRotationOrigin(this._gridCellSizeWidth),
+                SpriteEffects.None,
+                0f);
             }
 
             //draw pointer
