@@ -21,6 +21,6 @@ namespace InventoryManager
         /// <summary>
         /// Keyboard is polled every
         /// </summary>
-        public static readonly TimeSpan POLL_KEYBOARD_INTERVAL = TimeSpan.FromMilliseconds(50); 
+        public static readonly TimeSpan POLL_KEYBOARD_INTERVAL = TimeSpan.FromMilliseconds(100); 
     }
 }

@@ -31,6 +31,10 @@ namespace Engine
         /// Move right
         /// </summary>
         void MoveRight();
+
+        /// <summary>
+        /// Move to specific grid position
+        void Move(Vector2 to);
     }
 
     /// <summary>
@@ -52,6 +56,37 @@ namespace Engine
         /// Rotate anti clockwise
         /// </summary>
         void RotateAntiClockwise();
+    }
+
+    /// <summary>
+    /// Defines an interface to select
+    /// </summary>
+    public interface ISelector<T>
+    {
+        /// <summary>
+        /// Item selected
+        /// </summary>
+        T SelectedItem { get; } 
+
+        /// <summary>
+        /// True if it has selection
+        /// </summary>
+        bool HasSelection { get; }
+
+        /// <summary>
+        /// Try to select
+        /// </summary>
+        void TrySelect();
+
+        /// <summary>
+        /// Unselect
+        /// </summary>
+        void UnSelect();
+
+        /// <summary>
+        /// Cancel selection
+        /// </summary>
+        void CancelSelect();
     }
 
     /// <summary>
@@ -139,11 +174,18 @@ namespace Engine
     {
         public Vector2 Position { get; protected set; }
 
-        public IGrid ReferenceGrid { get; protected set; }
+        public IGrid ReferenceGrid { get; set; }
 
         public int Width { get; protected set; }
 
         public int Height { get; protected set; }
+
+        public Rectangle Bounds {
+            get
+            {
+                return new Rectangle(Convert.ToInt32(this.Position.X), Convert.ToInt32(this.Position.Y), this.Width, this.Height);
+            }
+        }
 
         public MovableGridItem(Vector2 initialPosition)
         {
@@ -188,6 +230,15 @@ namespace Engine
                 this.Position.X,
                 Math.Max(this.Position.Y - 1, 0)
             );
+        }
+
+        public void Move(Vector2 to)
+        {
+            if(to.X > 0 && to.X < this.ReferenceGrid.Width
+            && to.Y > 0 && to.Y< this.ReferenceGrid.Height)
+            {
+                this.Position = to;
+            }
         }
     }
 
@@ -306,9 +357,10 @@ namespace Engine
     }
 
     /// <summary>
-    /// The Inventory, a drawable grid, that forward Movable and Rotatable to Pointer or selected item
+    /// The Inventory, a drawable grid, that forward Movable and Rotatable to Pointer or selected item.
+    /// And that can select
     /// </summary>
-    public class Inventory : IMovable, IRotatable, IGrid, IDrawable
+    public class Inventory : IMovable, IRotatable, IGrid, IDrawable, ISelector<Item>
     {
         /// <summary>
         /// Pointer moved by user
@@ -341,7 +393,7 @@ namespace Engine
         private int _gridCellSizeWidth;
         private int _gridCellSizeHeight;
 
-        private Item _selectedItem;
+        public Item SelectedItem { get; private set; }
 
         private bool hasTexture = false;
 
@@ -349,7 +401,7 @@ namespace Engine
         {
             get
             {
-                return this._selectedItem != null;
+                return this.SelectedItem != null;
             }
         }
 
@@ -379,65 +431,96 @@ namespace Engine
 
         public void MoveDown()
         {
-            if(this._selectedItem == null)
-            {
-                this._pointer.MoveDown();
-            }
+            MovableGridItem toMove = (this.SelectedItem != null) ? this.SelectedItem as MovableGridItem : this._pointer as MovableGridItem;
+            toMove.MoveDown();
         }
 
         public void MoveLeft()
         {
-            if (this._selectedItem == null)
-            {
-                this._pointer.MoveLeft();
-            }
+            MovableGridItem toMove = (this.SelectedItem != null) ? this.SelectedItem as MovableGridItem : this._pointer as MovableGridItem;
+            toMove.MoveLeft();
         }
 
         public void MoveRight()
         {
-            if (this._selectedItem == null)
-            {
-                this._pointer.MoveRight();
-            }
+            MovableGridItem toMove = (this.SelectedItem != null) ? this.SelectedItem as MovableGridItem : this._pointer as MovableGridItem;
+            toMove.MoveRight();
         }
 
         public void MoveUp()
         {
-            if (this._selectedItem == null)
+            MovableGridItem toMove = (this.SelectedItem != null) ? this.SelectedItem as MovableGridItem : this._pointer as MovableGridItem;
+            toMove.MoveUp();
+        }
+
+        public void Move(Vector2 to)
+        {
+            //unsupported
+        }
+
+        public void TrySelect()
+        {
+            if (!this.HasSelection) {
+                foreach (var item in this.StoredItems)
+                {
+                    if (item.Bounds.Intersects(this._pointer.Bounds))
+                    {
+                        this.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+        }
+
+        public void UnSelect()
+        {
+            if (this.HasSelection)
             {
-                this._pointer.MoveUp();
+                foreach (var item in this.StoredItems)
+                {
+                    //an item intersects pointer
+                    if (item != this.SelectedItem
+                    &&  item.Bounds.Intersects(this.SelectedItem.Bounds))
+                    {
+                        //do nothing
+                        return;
+                    }
+                }
+                //no item conflicting -> apply selection
+                this._pointer.Move(this.SelectedItem.Position);
+                this.SelectedItem = null;
+            }
+        }
+
+        public void CancelSelect()
+        {
+            if (this.HasSelection)
+            {
+                this.SelectedItem.Move(this._pointer.Position);
+                this.SelectedItem = null;
             }
         }
 
         public void RotateClockwise()
         {
-            if (this._selectedItem != null)
+            if (this.SelectedItem != null)
             {
-                this._selectedItem.RotateAntiClockwise();
+                this.SelectedItem.RotateAntiClockwise();
             }
         }
 
         public void RotateAntiClockwise()
         {
-            if (this._selectedItem != null)
+            if (this.SelectedItem != null)
             {
-                this._selectedItem.RotateClockwise();
+                this.SelectedItem.RotateClockwise();
             }
         }
 
-        public void TrySelect()
+        public void StoreItem(Item item)
         {
-
-        }
-
-        public void UnSelect()
-        {
-
-        }
-
-        public void CancelSelect()
-        {
-
+            item.ReferenceGrid = this;
+            this.StoredItems.Add(item);
         }
 
         public void Update(GraphicsDevice device, int drawingWidth, int drawingHeight)

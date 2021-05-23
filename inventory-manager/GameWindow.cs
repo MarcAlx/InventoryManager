@@ -64,9 +64,9 @@ namespace InventoryManager
             this.Window.Title = Config.WINDOW_TITLE;
 
             this._engine = new Inventory(new Vector2(0,0),10,5, GraphicsDevice.Viewport.Bounds.Width, GraphicsDevice.Viewport.Bounds.Height, null, null);
-            this._engine.StoredItems.Add(new Herb(new Vector2(1,1)));
-            this._engine.StoredItems.Add(new Box(new Vector2(4, 3)));
-            this._engine.StoredItems.Add(new Egg(new Vector2(5, 0)));
+            this._engine.StoreItem(new Herb(new Vector2(1,1)));
+            this._engine.StoreItem(new Box(new Vector2(4, 3)));
+            this._engine.StoreItem(new Egg(new Vector2(5, 0)));
 
             this._pollActionTimer = new Timer(() =>
             {
@@ -89,6 +89,9 @@ namespace InventoryManager
                         break;
                     case ActionEnum.SELECT:
                         this._engine.TrySelect();
+                        break;
+                    case ActionEnum.UNSELECT:
+                        this._engine.UnSelect();
                         break;
                     case ActionEnum.ROTATE_LEFT:
                         this._engine.RotateAntiClockwise();
