@@ -12,7 +12,7 @@ namespace InventoryManager
         private SpriteBatch _spriteBatch;
         private SpriteFont _defaultFont;
 
-        private GameEngine _engine;
+        private Inventory _engine;
 
         public GameWindow()
         {
@@ -27,7 +27,7 @@ namespace InventoryManager
         {
             this.Window.Title = Config.WINDOW_TITLE;
 
-            this._engine = new GameEngine();
+            this._engine = new Inventory(new Vector2(0,0),10,5, GraphicsDevice.Viewport.Bounds.Width, GraphicsDevice.Viewport.Bounds.Height, null, null);
 
             base.Initialize();
         }
@@ -43,6 +43,8 @@ namespace InventoryManager
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            this._engine.Update(this.GraphicsDevice, GraphicsDevice.Viewport.Bounds.Width, GraphicsDevice.Viewport.Bounds.Height);
+
             base.Update(gameTime);
         }
 
@@ -56,6 +58,9 @@ namespace InventoryManager
             {
                 Toolkit.DrawFPSAt(new Vector2(5, 5), _defaultFont, _spriteBatch, 1 / (float)gameTime.ElapsedGameTime.TotalSeconds);
             }
+
+            //draw invetory
+            this._engine.Draw(new Vector2(0, 0), this._spriteBatch);
 
             this._spriteBatch.End();
             base.Draw(gameTime);
