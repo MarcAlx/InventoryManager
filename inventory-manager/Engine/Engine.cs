@@ -145,6 +145,11 @@ namespace Engine
 
         public int Height { get; protected set; }
 
+        public MovableGridItem(Vector2 initialPosition)
+        {
+            this.Position = initialPosition;
+        }
+
         public void MoveDown()
         {
             var newY = this.Position.Y + 1;
@@ -193,6 +198,10 @@ namespace Engine
     {
         public float RotationAngle { get; private set; } = 0;
 
+        public MovableRotatableGridItem(Vector2 initialPosition) : base(initialPosition)
+        {
+        }
+
         public void RotateAntiClockwise()
         {
             var w = this.Width;
@@ -225,7 +234,7 @@ namespace Engine
 
         private bool hasTexture = false;
 
-        public Pointer(Texture2D texture2D, IGrid referenceGrid)
+        public Pointer(Texture2D texture2D, IGrid referenceGrid) : base(new Vector2(0,0))
         {
             this.Width = 1;
             this.Height = 1;
@@ -262,6 +271,20 @@ namespace Engine
 
         public int DrawingHeight { get; protected set; }
 
+        public Item(Vector2 initialPosition,int width, int height, Texture2D texture2D) : base(initialPosition)
+        {
+            this.Width = width;
+            this.Height = height;
+            if (this.Texture2D == null)
+            {
+                hasTexture = false;
+            }
+            else
+            {
+                this.Texture2D = texture2D;
+            }
+        }
+
         public float Angle
         {
             get
@@ -287,6 +310,9 @@ namespace Engine
     /// </summary>
     public class Inventory : IMovable, IRotatable, IGrid, IDrawable
     {
+        /// <summary>
+        /// Pointer moved by user
+        /// </summary>
         private Pointer _pointer;
 
         public int Width { get; protected set; }
@@ -307,7 +333,10 @@ namespace Engine
 
         public Vector2 Position { get; protected set; }
 
-        public List<Item> Items;
+        /// <summary>
+        /// Items stored in inventory
+        /// </summary>
+        public List<Item> StoredItems;
 
         private int _gridCellSizeWidth;
         private int _gridCellSizeHeight;
@@ -339,7 +368,7 @@ namespace Engine
             this._gridCellSizeHeight = this.DrawingHeight / height;
             this._pointer = new Pointer(pointerTexture2D, this);
 
-            this.Items = new List<Item>();
+            this.StoredItems = new List<Item>();
             this.Position = position;
             this.Width = width;
             this.Height = height;
@@ -423,13 +452,33 @@ namespace Engine
                 this.Texture2D = new Texture2D(device, drawingWidth, drawingHeight, false, SurfaceFormat.Color);
                 this.Texture2D.SetData(Enumerable.Range(0, drawingWidth * drawingHeight).Select(i => Color.LightCoral).ToArray());
             }
-            this._pointer.Update(device, this._gridCellSizeWidth, this._gridCellSizeHeight);
+
+            //update items
+            foreach (var item in this.StoredItems)
+            {
+                item.Update(device, item.Width * this._gridCellSizeWidth, item.Height * this._gridCellSizeHeight);
+            }
+
+            //update pointer
+            this._pointer.Update(device, this._pointer.Width * this._gridCellSizeWidth, this._pointer.Height * this._gridCellSizeHeight);
         }
 
         public void Draw(Vector2 position, SpriteBatch batch)
         {
             //draw inventory
             batch.Draw(this.Texture2D, position, Color.White);
+
+            //draw items
+            foreach(var item in this.StoredItems)
+            {
+                batch.Draw(
+                item.Texture2D,
+                new Vector2(
+                    item.Position.X * this._gridCellSizeWidth,
+                    item.Position.Y * this._gridCellSizeHeight),
+                Color.White);
+            }
+
             //draw pointer
             batch.Draw(
                 this._pointer.Texture2D,

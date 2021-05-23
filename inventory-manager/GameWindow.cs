@@ -6,6 +6,25 @@ using Engine;
 
 namespace InventoryManager
 {
+    public class Herb : Item
+    {
+        public Herb(Vector2 pos) : base(pos,1,3,null) {
+        }
+    }
+
+    public class Box : Item
+    {
+        public Box(Vector2 pos) : base(pos,2,2,null)
+        {
+        }
+    }
+
+    public class Egg : Item
+    {
+        public Egg(Vector2 pos) : base(pos,1,1,null)
+        {
+        }
+    }
 
     public class GameWindow : Game
     {
@@ -45,6 +64,9 @@ namespace InventoryManager
             this.Window.Title = Config.WINDOW_TITLE;
 
             this._engine = new Inventory(new Vector2(0,0),10,5, GraphicsDevice.Viewport.Bounds.Width, GraphicsDevice.Viewport.Bounds.Height, null, null);
+            this._engine.StoredItems.Add(new Herb(new Vector2(1,1)));
+            this._engine.StoredItems.Add(new Box(new Vector2(4, 3)));
+            this._engine.StoredItems.Add(new Egg(new Vector2(5, 0)));
 
             this._pollActionTimer = new Timer(() =>
             {
@@ -160,7 +182,7 @@ namespace InventoryManager
                 Toolkit.DrawFPSAt(new Vector2(5, 5), _defaultFont, _spriteBatch, 1 / (float)gameTime.ElapsedGameTime.TotalSeconds);
             }
 
-            //draw invetory
+            //draw inventory
             this._engine.Draw(new Vector2(0, 0), this._spriteBatch);
 
             this._spriteBatch.End();
