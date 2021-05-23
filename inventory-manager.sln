@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.809.7
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2C1D3BA0-430A-4423-949B-76D525CC07E7}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		LICENSE = LICENSE
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "inventory-manager", "inventory-manager\inventory-manager.csproj", "{97B37BA5-110B-4409-8BED-DEC35BE29FA8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{97B37BA5-110B-4409-8BED-DEC35BE29FA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97B37BA5-110B-4409-8BED-DEC35BE29FA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97B37BA5-110B-4409-8BED-DEC35BE29FA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97B37BA5-110B-4409-8BED-DEC35BE29FA8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3354FA5D-5777-4B3C-A55A-F5A02F74112C}
+	EndGlobalSection
+EndGlobal
