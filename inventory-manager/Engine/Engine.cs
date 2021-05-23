@@ -194,12 +194,11 @@ namespace Engine
 
         public void MoveDown()
         {
-            var newY = this.Position.Y + 1;
-            if (newY < this.ReferenceGrid.Height)
+            if (this.Position.Y + this.Height < this.ReferenceGrid.Height)
             {
                 this.Position = new Vector2(
                     this.Position.X,
-                    Math.Min(newY, this.ReferenceGrid.Height)
+                    Math.Min(this.Position.Y + 1, this.ReferenceGrid.Height)
                 );
             }
         }
@@ -214,8 +213,7 @@ namespace Engine
 
         public void MoveRight()
         {
-            var newX = this.Position.X + 1;
-            if (newX < this.ReferenceGrid.Width)
+            if (this.Position.X + this.Width < this.ReferenceGrid.Width)
             {
                 this.Position = new Vector2(
                 Math.Min(this.Position.X + 1, this.ReferenceGrid.Width),
